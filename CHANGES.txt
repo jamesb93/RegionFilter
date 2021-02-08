@@ -56,3 +56,6 @@ Version 1.4.0
 	- Cleaned up some of the server listings
 	- Reflect changes in the datacentre merges
 	- New colour scheme (feedback wanted for this)
+
+Version 1.5.0
+	- Added a Region Filter checkbox to filter the list by your datacentre
