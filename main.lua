@@ -49,6 +49,24 @@ if RF.region == 'BR' then RF.postType = posts.br_post end
 -- 	return true
 -- end
 
+local function addFilteredId(self, id)
+    if ( not self.filteredIDs ) then
+        self.filteredIDs = { };
+    end
+    tinsert(self.filteredIDs, id);
+end
+
+local function filterTable(t, ids)
+    for i, id in ipairs(ids) do
+        for j = #t, 1, -1 do
+            if ( t[j] == id ) then
+                tremove(t, j);
+                break;
+            end
+        end
+    end
+end
+
 ---- Updating the text of entries
 function RF.updateEntries(results)
 	local searchResults = C_LFGList.GetSearchResultInfo(results.resultID)
@@ -93,6 +111,81 @@ function RF.updateEntries(results)
 	end
 end
 
+function RF.sortSearchResults(results) 
+    local categoryID = LFGListFrame.SearchPanel.categoryID;
+	local countRemoved = 0
+	local countRemaining = 0
+	
+	-- RF.region -- filter by this
+	local function FilterSearchResults(searchResultID)
+		if not RF.togRemove then 
+			return 
+		end
+
+		local searchResults = C_LFGList.GetSearchResultInfo(searchResultID)
+		local leaderName = searchResults.leaderName
+		local removedByFilter = true
+
+		if leaderName ~= nil then -- Filter out nil entries from LFG Pane
+			local name, realm = RF:sanitiseName(leaderName)
+			local info = servers[realm]
+			if info then
+				local region, dataCentre = info[1], info[2]
+
+				if (RF.region == region and RF.dataCentre == dataCentre) then
+					removedByFilter = false
+					countRemaining = countRemaining + 1
+				end
+			end
+		end
+
+		if (removedByFilter) then 
+			--print('removing '..searchResultID)
+			--table.remove(results,searchResultID)
+			addFilteredId(LFGListFrame.SearchPanel, searchResultID);
+			countRemoved = countRemoved + 1
+		end
+	end
+  
+	if (#results > 0 and categoryID == 2) then
+		for index = #results, 1, -1 do
+			FilterSearchResults(results[index])
+		end
+		
+		if (LFGListFrame.SearchPanel.filteredIDs) then
+			filterTable(LFGListFrame.SearchPanel.results, LFGListFrame.SearchPanel.filteredIDs)
+			LFGListFrame.SearchPanel.filteredIDs = nil
+			
+			LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel)
+			--print('Removed: '..countRemoved..', leaving '..countRemaining)
+		end
+	end
+end
+
+function RF.Dialog_UseRF_OnClick(self, button, down)
+    local checked = self:GetChecked()
+    RF.togRemove = checked
+    LFGListSearchPanel_DoSearch(LFGListFrame.SearchPanel)
+end
+
+function RF.Dialog_SetUpRFCheckbox()
+    local button = CreateFrame("CheckButton", "UseRFButton", LFGListFrame.SearchPanel, "UICheckButtonTemplate")
+    button:SetSize(26, 26)
+    button:SetHitRectInsets(-2, -30, -2, -2)
+    button.text:SetText("RF")
+    button.text:SetFontObject("GameFontHighlight")
+    button.text:SetWidth(30)
+    button:SetPoint("LEFT", LFGListFrame.SearchPanel.RefreshButton, "LEFT", -62, 0)
+    button:SetPoint("TOP", LFGListFrame.SearchPanel.RefreshButton, "TOP", 0, -3)
+    button:SetScript("OnClick", RF.Dialog_UseRF_OnClick)
+    button:SetScript("OnEnter", function (self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText("Enable or disable the local region filter")
+    end)
+    button:SetScript("OnLeave", function () GameTooltip:Hide() end)
+    RF.UseRFButton = button
+end
+
 
 -- SLASH_RFILTER1 = "/rfilter"
 -- SlashCmdList["RFILTER"] = function(msg)
@@ -117,5 +210,7 @@ welcomePrompt:SetScript("OnEvent", function(_, event)
 	end
 end)
 
+RF.Dialog_SetUpRFCheckbox()
 -- hooksecurefunc("LFGListUtil_SortSearchResults", RF.sortEntries)
 hooksecurefunc("LFGListSearchEntry_Update", 	RF.updateEntries)
+hooksecurefunc("LFGListUtil_SortSearchResults", RF.sortSearchResults);
