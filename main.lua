@@ -49,6 +49,24 @@ if RF.region == 'BR' then RF.postType = posts.br_post end
 -- 	return true
 -- end
 
+local function addFilteredId(self, id)
+    if ( not self.filteredIDs ) then
+        self.filteredIDs = { };
+    end
+    tinsert(self.filteredIDs, id);
+end
+
+local function filterTable(t, ids)
+    for i, id in ipairs(ids) do
+        for j = #t, 1, -1 do
+            if ( t[j] == id ) then
+                tremove(t, j);
+                break;
+            end
+        end
+    end
+end
+
 ---- Updating the text of entries
 function RF.updateEntries(results)
 	local searchResults = C_LFGList.GetSearchResultInfo(results.resultID)
@@ -124,7 +142,7 @@ function RF.sortSearchResults(results)
 		if (removedByFilter) then 
 			--print('removing '..searchResultID)
 			--table.remove(results,searchResultID)
-			LFGListSearchPanel_AddFilteredID(LFGListFrame.SearchPanel, searchResultID)
+			addFilteredId(LFGListFrame.SearchPanel, searchResultID);
 			countRemoved = countRemoved + 1
 		end
 	end
@@ -135,10 +153,10 @@ function RF.sortSearchResults(results)
 		end
 		
 		if (LFGListFrame.SearchPanel.filteredIDs) then
-			LFGListUtil_FilterSearchResults(LFGListFrame.SearchPanel.results, LFGListFrame.SearchPanel.filteredIDs)
-			--LFGListSearchPanel_UpdateResultList(LFGListFrame.SearchPanel) --causes stack overflow
-			LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel)
+			filterTable(LFGListFrame.SearchPanel.results, LFGListFrame.SearchPanel.filteredIDs)
 			LFGListFrame.SearchPanel.filteredIDs = nil
+			
+			LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel)
 			--print('Removed: '..countRemoved..', leaving '..countRemaining)
 		end
 	end
