@@ -57,5 +57,5 @@ Version 1.4.0
 	- Reflect changes in the datacentre merges
 	- New colour scheme (feedback wanted for this)
 
-Version 1.5.0
-	- Added a Region Filter checkbox to filter the list by your datacentre
+Version 1.5.1
+	- Slash command '/rfilter' to remove groups from outside your region.

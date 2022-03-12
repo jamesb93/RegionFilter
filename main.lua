@@ -1,7 +1,7 @@
 local RF = select(2, ...)
 local servers = RF.servers
 local posts = RF.posts
-RF.version = "1.5.0"
+RF.version = "1.5.1"
 RF.togRemove = false
 
 local spaced_realm = string.gsub(GetRealmName(), "%s+", "")
