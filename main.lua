@@ -1,8 +1,8 @@
 local RF = select(2, ...)
 local servers = RF.servers
 local posts = RF.posts
-RF.version = "1.5.0"
-RF.togRemove = false
+RF.version = "1.6.0"
+RF.togRemove = true
 
 local spaced_realm = string.gsub(GetRealmName(), "%s+", "")
 RF.myRealm = string.gsub(spaced_realm, "'", "")
@@ -24,30 +24,31 @@ if RF.region == 'OC' then RF.postType = posts.oc_post end
 if RF.region == 'LA' then RF.postType = posts.la_post end
 if RF.region == 'BR' then RF.postType = posts.br_post end
 ---- Removing Enrties when togRemove is enabled
--- function RF.removeEntries(results)
--- 	if RF.togRemove then
--- 		for i=1, #results do
--- 			local resultID = results[i]
--- 			local searchResults = C_LFGList.GetSearchResultInfo(resultID)
+ function RF.sortEntries(results)
+ 	if RF.togRemove then
+ 		for i=1, #results do
+ 			local resultID = results[i]
+			if (resultID ~= nil) then
+				local searchResultData = C_LFGList.GetSearchResultInfo(resultID)
+				local leaderName = searchResultData.leaderName
 
--- 			local leaderName = searchResults.leaderName
-
--- 			if leaderName ~= nil then -- Filter out nil entries from LFG Pane
--- 				local name, realm = RF:sanitiseName(leaderName)
--- 				local info = servers[realm]
--- 				if info ~= nil then
--- 					local region = info[1]
--- 					if RF.region ~= region then
--- 						table.remove(results, i)
--- 					end
--- 				end
--- 			end
--- 		end
--- 	end
--- 	table.sort(results)
--- 	LFGListFrame.SearchPanel.totalResults = #results
--- 	return true
--- end
+				if leaderName ~= nil then -- Filter out nil entries from LFG Pane
+					local name, realm = RF:sanitiseName(leaderName)
+					local info = servers[realm]
+					if info ~= nil then
+						local region = info[1]
+						if RF.region ~= region then
+							table.remove(results, i)
+						end
+					end
+				end
+			end
+ 		end
+ 	end
+	table.sort(results)
+	LFGListFrame.SearchPanel.totalResults = #results
+ 	return true
+ end
 
 ---- Updating the text of entries
 function RF.updateEntries(results)
@@ -81,17 +82,17 @@ function RF.updateEntries(results)
 end
 
 
--- SLASH_RFILTER1 = "/rfilter"
--- SlashCmdList["RFILTER"] = function(msg)
--- 	if RF.togRemove then
--- 		print('|cff00ffff[Region Filter]: |cffFF6EB4 Not filtering outside regions')
--- 	else
--- 		print('|cff00ffff[Region Filter]: |cffFF6EB4 Filtering outside regions')
--- 	end
--- 	RF.togRemove = not RF.togRemove
--- 	LFGListSearchPanel_UpdateResultList (LFGListFrame.SearchPanel)
--- 	LFGListSearchPanel_UpdateResults 	(LFGListFrame.SearchPanel)
--- end
+SLASH_RFILTER1 = "/rfilter"
+SlashCmdList["RFILTER"] = function(msg)
+	if RF.togRemove then
+		print('|cff00ffff[Region Filter]: |cffFF6EB4 Not filtering outside regions')
+	else
+		print('|cff00ffff[Region Filter]: |cffFF6EB4 Filtering outside regions')
+	end
+	RF.togRemove = not RF.togRemove
+	LFGListSearchPanel_UpdateResultList (LFGListFrame.SearchPanel)
+	LFGListSearchPanel_UpdateResults 	(LFGListFrame.SearchPanel)
+end
 
 ---- Print When Loaded ----
 local welcomePrompt = CreateFrame("Frame")
@@ -103,5 +104,5 @@ welcomePrompt:SetScript("OnEvent", function(_, event)
 	end
 end)
 
--- hooksecurefunc("LFGListUtil_SortSearchResults", RF.sortEntries)
+hooksecurefunc("LFGListUtil_SortSearchResults", RF.sortEntries)
 hooksecurefunc("LFGListSearchEntry_Update", RF.updateEntries)
